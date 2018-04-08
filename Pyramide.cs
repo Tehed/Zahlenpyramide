@@ -6,15 +6,15 @@ namespace Zahlenpyramide
     public class Pyramide
     {
 
-        // Unsere Pyramide
-        int[] pyramide;
+        // Alle Möglichen Lösungen werden hier gespeichert
+        List<int[]> loesungen;
+
+        // So viele Zahlen hat eine Pyramide. 
+        // Die Zahlen gehen immer von 1 bis "zahlen"
+        int maxZahl;
 
         // Anzahl der Reihen der Pyramide
         int reihen;
-
-        // Die höchste Zahl, die benutzt wird. 
-        // Alle Zahlen in der Pyramide liegen zwischen 1 und maxZahl;
-        int maxZahl;
 
         List<int[]> untersteReihe;
 
@@ -24,16 +24,10 @@ namespace Zahlenpyramide
         public Pyramide(int zahlen, int reihen)
         {
             // Initialisiere die Attribute der Klasse
-            this.pyramide = new int[zahlen];
-            this.maxZahl = pyramide.Length;
+            this.loesungen = new List<int[]>();
+            this.maxZahl = zahlen;
             this.reihen = reihen;
             this.untersteReihe = new List<int[]>();
-
-            // Initial werden alle Werte auf 0 gesetzt
-            for (int i = 0; i < pyramide.Length; i++)
-            {
-                pyramide[i] = 0;
-            }
 
             // Wir generieren alle Möglichkeiten, die in der untersten Reihe stehen können. 
             // Das sind insg. 15*14*13*12*11 = 360.360 Möglichkeiten. 
@@ -52,8 +46,11 @@ namespace Zahlenpyramide
                         {
                             for (int e = 1; e <= 11; e++)
                             {
-                                int[] permutation = new int[] { a, b, c, d, e };
-                                untersteReihe.Add(permutation);
+                                int[] moeglicheReihe = new int[] { a, b, c, d, e };
+                                if (IstUntersteReiheMoeglich(moeglicheReihe))
+                                {
+                                    untersteReihe.Add(moeglicheReihe);
+                                }
                             }
                         }
                     }
@@ -63,6 +60,31 @@ namespace Zahlenpyramide
             Console.WriteLine("Es gibt {0} Möglichkeiten für die unterste Reihe", untersteReihe.Count);
         }
 
+        /**
+         * Eine Reihe ist dann ok, wenn keine der Zahlen doppelt ist.
+         * In der untersten Reihe muss außerdem auf jeden Fall die 
+         * höchste Zahl vorkommen.
+         */
+        private bool IstUntersteReiheMoeglich(int[] reihe)
+        {
+            List<int> test = new List<int>();
+            for (int i = 0; i < reihe.Length; i++)
+            {
+                if (test.Contains(reihe[i]))
+                {
+                    // Wert ist schon vorhanden => doppelter Wert
+                    // Wir brechen hier ab - die Zeile ist nicht möglich!
+                    return false;
+                }
+                else
+                {
+                    test.Add(reihe[i]);
+                }
+            }
+
+            // wenn die Liste so lang ist wie das array, dann ist die Reihe gültig
+            return (test.Count == reihe.Length);
+        }
 
         public void LoesePyramide()
         {
@@ -72,34 +94,41 @@ namespace Zahlenpyramide
             {
                 int[] reihe = untersteReihe[i];
 
-                // wir fangen hinten in der Pyramide an und setzen erst
-                // einmal alle Zahlen dieser Möglichkeit in die unterste
-                // Reihe ein
-                int pyramidenPosition = pyramide.Length - 1;
-                for (int j = 0; j < reihe.Length; j++)
-                {
-                    int zahl = reihe[j];
-                    SetzeZahlAnPosition(pyramidenPosition, zahl);
-                    pyramidenPosition--;
-                }
-
-                BerechneLoestungMitUntersterReihe();
-
-                GibPyramideAus();
+                BerechneLoestungMitUntersterReihe(reihe);
             }
         }
 
-        private void BerechneLoestungMitUntersterReihe()
+        private void BerechneLoestungMitUntersterReihe(int[] untersteReihe)
         {
-            // TODO
+            // Das hier könnte eine Lösung werden
+            int[] pyramide = new int[maxZahl];
+
+            // wir fangen hinten in der Pyramide an und setzen erst
+            // einmal alle Zahlen dieser Möglichkeit in die unterste
+            // Reihe ein
+            int aktuellePosition = pyramide.Length - 1;
+            for (int i = 0; i < untersteReihe.Length; i++)
+            {
+                int zahl = untersteReihe[i];
+                SetzeZahlAnPosition(pyramide, aktuellePosition, zahl);
+                aktuellePosition--;
+            }
+
+            // alle anderen Werte werden berechnet
+            for (int i = aktuellePosition; i >= 0; i--)
+            {
+
+            }
+
+            GibPyramideAus(pyramide);
         }
 
         List<int> benutzteZahlen = new List<int>();
-        private void SetzeZahlAnPosition(int pyramidenPosition, int zahl)
+        private void SetzeZahlAnPosition(int[] pyramide, int position, int zahl)
         {
-            if (pyramidenPosition >= 0 && pyramidenPosition < pyramide.Length)
+            if (position >= 0 && position < pyramide.Length)
             {
-                pyramide[pyramidenPosition] = zahl;
+                pyramide[position] = zahl;
                 BenutzeZahl(zahl);
             }
         }
@@ -115,21 +144,10 @@ namespace Zahlenpyramide
             return false;
         }
 
-        private bool GibZahlFrei(int zahl)
-        {
-            if (benutzteZahlen.Contains(zahl))
-            {
-                benutzteZahlen.Remove(zahl);
-                return true;
-            }
-
-            return false;
-        }
-
         /**
          * Gibt die Pyramide auf der Console aus.
          */
-        public void GibPyramideAus()
+        public void GibPyramideAus(int[] pyramide)
         {
             int index = 0;
             for (int i = 1; i <= reihen; i++)
